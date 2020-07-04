@@ -1,5 +1,9 @@
 const mongoose = require('mongoose');
+const mongoosastic = require('mongoosastic');
 const bcrypt = require('bcryptjs');
+const { esHost } = require('../../config/vars');
+
+const esClient = require('../../config/elasticsearch')();
 
 const directorSchema = new mongoose.Schema(
   {
@@ -41,4 +45,16 @@ directorSchema.pre('save', async function save(next) {
   }
 });
 
-module.exports = mongoose.model('Director', directorSchema);
+directorSchema.plugin(mongoosastic, {
+  esClient,
+  hosts: [
+    esHost,
+  ],
+  // populate: [],
+});
+
+const Director = mongoose.model('Director', directorSchema);
+
+Director.esSearch = Promise.promisify(Director.esSearch, { context: Director });
+
+module.exports = Director;

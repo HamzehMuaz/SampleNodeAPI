@@ -49,10 +49,37 @@ const deleteMovie = {
   },
 };
 
+const searchMovies = {
+  method: 'POST',
+  path: '/movies/search',
+  config: {
+    handler: movieController.searchMovies,
+  },
+};
+
+const countMovies = {
+  method: 'POST',
+  path: '/movies/count',
+  config: {
+    handler: movieController.countMovies,
+  },
+};
+
+const getAllMoviesAndFilter = {
+  method: 'POST',
+  path: '/movies/all',
+  config: {
+    handler: movieController.getAllMoviesAndFilter,
+  },
+};
+
 module.exports = [
   getMovie,
   getAllMovies,
   createMovie,
   updateMovie,
   deleteMovie,
+  searchMovies,
+  countMovies,
+  getAllMoviesAndFilter,
 ];
