@@ -1,4 +1,4 @@
-const Joi = require('joi');
+const Joi = require('@hapi/joi');
 Joi.objectId = require('joi-objectid')(Joi);
 
 const genresEnum = ['Action', 'Adventure', 'Animation', 'Biography', 'Comedy', 'Crime', 'Documentary', 'Drama', 'Family', 'Fantasy', 'Film-Noir',
@@ -13,7 +13,7 @@ const colorEnum = ['Black and White', 'Color', ''];
 const movieBodyValidation = {
   duration: Joi.number().optional(),
   gross: Joi.number().optional(),
-  genres: Joi.array().items(Joi.string().valid(genresEnum)).optional(),
+  genres: Joi.array().items(Joi.string().valid(...genresEnum)).optional(),
   num_voted_users: Joi.number().optional(),
   cast_total_facebook_likes: Joi.number().optional(),
   plot_keywords: Joi.array().items(Joi.string()).optional(),
@@ -21,7 +21,7 @@ const movieBodyValidation = {
   num_user_for_reviews: Joi.number().optional(),
   language: Joi.string().optional(),
   country: Joi.string().optional(),
-  content_rating: Joi.array().items(Joi.string().valid(contentRatingEnum)).optional(),
+  content_rating: Joi.array().items(Joi.string().valid(...contentRatingEnum)).optional(),
   budget: Joi.number().optional(),
   title_year: Joi.number().min(1900).max(2030).optional(),
   imdb_score: Joi.number().min(0).max(10).optional(),
@@ -29,7 +29,7 @@ const movieBodyValidation = {
   movie_facebook_likes: Joi.number().optional(),
   actors: Joi.array().items(Joi.objectId()).optional(),
   director: Joi.objectId().optional(),
-  color: Joi.string().valid(colorEnum).optional(),
+  color: Joi.string().valid(...colorEnum).optional(),
 };
 
 module.exports = {
