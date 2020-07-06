@@ -1,5 +1,6 @@
 const csvtojson = require('csvtojson');
 const fs = require('fs');
+Promise = require('bluebird');
 
 const { Actor, Director, Movie } = require('../api/models');
 
@@ -10,6 +11,7 @@ mongoose.connect();
 const readMoviesMetaDataAndCreateModels = async () => {
   let csvString;
   let csvJson;
+  const distinctActors = {};
 
   const getActorsArray = (row) => {
     let i = 1;
@@ -29,6 +31,19 @@ const readMoviesMetaDataAndCreateModels = async () => {
     return actorArr;
   };
 
+  const findDistinctActors = () => {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const row of csvJson) {
+      const actorArray = getActorsArray(row);
+      // eslint-disable-next-line no-restricted-syntax
+      for (const actorBody of actorArray) {
+        if (!distinctActors[actorBody.name]) {
+          distinctActors[actorBody.name] = actorBody;
+        }
+      }
+    }
+  };
+
   try {
     csvString = await fs.readFileSync(`${__dirname}/csv/movieMetadata.csv`, 'utf8');
     csvJson = await csvtojson().fromString(csvString);
@@ -36,13 +51,12 @@ const readMoviesMetaDataAndCreateModels = async () => {
     console.error(`There was a problem with loading the csv file: ${error}`);
     return false;
   }
-
+  findDistinctActors();
+  const actorPromises = [];
   // eslint-disable-next-line no-restricted-syntax
-  for (const row of csvJson) {
-    const actorArray = getActorsArray(row);
-    const actorPromises = [];
-    // eslint-disable-next-line no-restricted-syntax
-    for (const actorBody of actorArray) {
+  for (const key in distinctActors) {
+    if (Object.hasOwnProperty.call(distinctActors, key)) {
+      const actorBody = distinctActors[key];
       const actorPromise = Actor.findOneAndUpdate({
         name: actorBody.name,
       }, {
@@ -53,11 +67,19 @@ const readMoviesMetaDataAndCreateModels = async () => {
       }).exec();
       actorPromises.push(actorPromise);
     }
-    // eslint-disable-next-line no-await-in-loop
-    Promise.all(actorPromises).then((actorModels) => {
-      const actorIds = actorModels.reduce((accumulator, currentValue) => {
+  }
+
+  Promise.all(actorPromises).then((actorModels) => {
+    // eslint-disable-next-line no-restricted-syntax
+    for (const actor of actorModels) {
+      distinctActors[actor.name] = actor.id;
+    }
+    // eslint-disable-next-line no-restricted-syntax
+    for (const row of csvJson) {
+      const actorArray = getActorsArray(row);
+      const actorIds = actorArray.reduce((accumulator, currentValue) => {
         if (currentValue) {
-          accumulator.push(currentValue.id);
+          accumulator.push(distinctActors[currentValue.name]);
         }
         return accumulator;
       }, []);
@@ -96,11 +118,13 @@ const readMoviesMetaDataAndCreateModels = async () => {
           upsert: true,
           new: true,
         }).exec();
+      }).catch((error) => {
+        console.log(error);
       });
-    }).catch((error) => {
-      console.error(error);
-    });
-  }
+    }
+  }).catch((error) => {
+    console.error(error);
+  });
   return true;
 };
 
